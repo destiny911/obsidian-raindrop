@@ -120,10 +120,10 @@
     }
 
     &-list-item {
-      padding: 8px 12px;
-      margin: 4px 0;
-      border-radius: 6px;
-      transition: background-color 0.2s ease;
+      padding: 4px 8px;
+      margin: 2px 0;
+      border-radius: 4px;
+      transition: background-color 0.15s ease;
 
       &:hover {
         background-color: var(--background-modifier-hover);
@@ -133,7 +133,7 @@
     &-item-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -172,7 +172,7 @@
       }
 
       td {
-        padding: 8px 12px;
+        padding: 4px 8px;
       }
     }
 
