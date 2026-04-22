@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-raindrop",
-	"name": "Obsidian Raindrop",
-	"version": "1.1.0",
-	"minAppVersion": "0.12.0",
-	"description": "This plugin will integrate your Raindrop.io bookmarks to Obsidian",
-	"author": "Micah Topping",
-	"authorUrl": "https://eristocrat.net",
+	"id": "raindrop-live",
+	"name": "Raindrop Live",
+	"version": "1.2.0",
+	"minAppVersion": "0.15.0",
+	"description": "Live view of your Raindrop.io bookmarks using codeblocks. User-friendly and lightweight.",
+	"author": "destiny911 & Antigravity",
+	"authorUrl": "https://github.com/destiny911/obsidian-raindrop",
 	"isDesktopOnly": false
 }

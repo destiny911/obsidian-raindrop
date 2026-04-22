@@ -5,7 +5,7 @@
   import WaitingIndicator from "./WaitingIndicator.svelte";
 
   import type { BlockQueryMap } from "../types";
-  import type { ObsidianRaindropSettings } from "main";
+  import type { RaindropLiveSettings } from "main";
   import { dataset_dev } from "svelte/internal";
 
   export let params: BlockQueryMap;

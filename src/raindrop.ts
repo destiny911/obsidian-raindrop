@@ -2,6 +2,17 @@ import type { BlockQueryMap } from "./types";
 
 const RAINDROP_API_BASE = "https://api.raindrop.io/rest/v1/";
 
+const getCollections = async (accessToken: string) => {
+  const result = await fetch(`${RAINDROP_API_BASE}collections`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = await result.json();
+  return data.items || [];
+};
+
 const getRaindropsCollection = async (
   collectionID: number = 0,
   search: string,
@@ -47,30 +58,35 @@ const getRaindrop = async (raindropID: number = 0, accessToken: string) => {
 };
 
 const getRaindrops = async (params: BlockQueryMap, accessToken: string) => {
-  console.info('getRaindrops', params);
-	let raindrops: any[] = [];
+  console.info("getRaindrops", params);
+  let raindrops: any[] = [];
 
-  if (params.collection !== null) {
-    raindrops = await getRaindropsCollection(
-      params["collection"],
-      params["search"],
-      params["sort"],
-      accessToken
-    );
-
-		return raindrops;
-  }
-
-	const raindropIDArr = params.raindropIDs.split(",");
-  for (const raindropID of raindropIDArr) {
-    const result = await getRaindrop(parseInt(raindropID), accessToken);
-
-    if (result.item !== undefined) {
-      raindrops.push(result.item);
+  try {
+    if (params.collection !== null && params.collection !== undefined) {
+      raindrops = await getRaindropsCollection(
+        params["collection"],
+        params["search"],
+        params["sort"],
+        accessToken
+      );
+      return raindrops || [];
     }
+
+    if (params.raindropIDs) {
+      const raindropIDArr = params.raindropIDs.toString().split(",");
+      for (const raindropID of raindropIDArr) {
+        const result = await getRaindrop(parseInt(raindropID.trim()), accessToken);
+        if (result && result.item) {
+          raindrops.push(result.item);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching raindrops:", error);
+    throw new Error("Failed to fetch bookmarks from Raindrop. Check your token or connection.");
   }
 
   return raindrops;
 };
 
-export { getRaindropsCollection, getRaindrops };
+export { getRaindropsCollection, getRaindrops, getCollections };

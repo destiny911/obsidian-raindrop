@@ -4,8 +4,12 @@ import {
   Plugin,
   PluginSettingTab,
   Setting,
+  Modal,
+  Notice,
+  MarkdownView,
   type MarkdownPostProcessorContext,
 } from "obsidian";
+import { getCollections } from "src/raindrop";
 import RaindropBlockQueryProvider from "src/components/RaindropBlockQueryProvider.svelte";
 
 import type {
@@ -14,27 +18,28 @@ import type {
 } from "src/types";
 
 
-export interface ObsidianRaindropSettings {
+export interface RaindropLiveSettings {
   raindropAccessToken: string;
   bookmarkListRefreshInterval: number;
 }
 
-const DEFAULT_SETTINGS: ObsidianRaindropSettings = {
+const DEFAULT_SETTINGS: RaindropLiveSettings = {
   raindropAccessToken: "",
   bookmarkListRefreshInterval: 60,
 };
 
-export default class ObsidianRaindrop extends Plugin {
-  settings: ObsidianRaindropSettings;
-  
+export default class RaindropLive extends Plugin {
+  settings: RaindropLiveSettings;
 
   async onload() {
-    // console.info("onload");
-
     await this.loadSettings();
     this.registerPostProcessors();
 
-    this.addSettingTab(new ObsidianRaindropSettingsTab(this.app, this));
+    this.addRibbonIcon("links-coming-in", "Raindrop Live: Insert View", () => {
+      new RaindropLiveModal(this.app, this).open();
+    });
+
+    this.addSettingTab(new RaindropLiveSettingsTab(this.app, this));
   }
 
   onunload() {
@@ -108,15 +113,15 @@ export default class ObsidianRaindrop extends Plugin {
       const matchArr = source.match(re);
       let result: string | number =
         matchArr && matchArr.length > 1 ? matchArr[1].trim() : null;
-      console.log(key, result);
+      
       if (key === 'collection') {
-        paramMap['collection'] = (result === null) ? null : parseInt(result);
+        paramMap['collection'] = (result === null) ? 0 : parseInt(result as string);
       } else if (key === 'showTags') {
         paramMap['showTags'] = (result !== 'false');
       } else if (key === 'highlights') {
         paramMap['highlights'] = (result === 'true');
       } else {
-        paramMap[key] = result;
+        paramMap[key] = result || (key === 'raindropIDs' ? "" : null);
       }
     });
 
@@ -134,6 +139,107 @@ export default class ObsidianRaindrop extends Plugin {
   }
 }
 
+class RaindropLiveModal extends Modal {
+  plugin: RaindropLive;
+
+  constructor(app: App, plugin: RaindropLive) {
+    super(app);
+    this.plugin = plugin;
+  }
+
+  async onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: "Raindrop Live: Builder" });
+
+    if (!this.plugin.settings.raindropAccessToken) {
+      contentEl.createEl("p", { text: "Please set your Raindrop Test Token in the plugin settings first." });
+      return;
+    }
+
+    const collections = await getCollections(this.plugin.settings.raindropAccessToken);
+    
+    let selectedCollection = "0";
+    let search = "";
+    let sort = "-created";
+    let showTags = true;
+    let highlights = false;
+    let format = "list";
+
+    new Setting(contentEl)
+      .setName("Collection")
+      .addDropdown((dropdown) => {
+        dropdown.addOption("0", "All Bookmarks");
+        dropdown.addOption("-1", "Unsorted");
+        collections.forEach((c: any) => {
+          dropdown.addOption(c._id.toString(), c.title);
+        });
+        dropdown.onChange((value) => (selectedCollection = value));
+      });
+
+    new Setting(contentEl)
+      .setName("Search Query")
+      .setDesc("Optional: e.g. #tag or keyword")
+      .addText((text) => text.onChange((value) => (search = value)));
+
+    new Setting(contentEl)
+      .setName("Sort Order")
+      .addDropdown((dropdown) => {
+        dropdown.addOption("-created", "Newest");
+        dropdown.addOption("created", "Oldest");
+        dropdown.addOption("-title", "Title (Z-A)");
+        dropdown.addOption("title", "Title (A-Z)");
+        dropdown.onChange((value) => (sort = value));
+      });
+
+    new Setting(contentEl)
+      .setName("Display Highlights")
+      .addToggle((toggle) => toggle.setValue(highlights).onChange((value) => (highlights = value)));
+
+    new Setting(contentEl)
+      .setName("Show Tags")
+      .addToggle((toggle) => toggle.setValue(showTags).onChange((value) => (showTags = value)));
+
+    new Setting(contentEl)
+      .setName("Format")
+      .addDropdown((dropdown) => {
+        dropdown.addOption("list", "List");
+        dropdown.addOption("table", "Table");
+        dropdown.onChange((value) => (format = value));
+      });
+
+    new Setting(contentEl).addButton((btn) =>
+      btn
+        .setButtonText("Insert Raindrop View")
+        .setCta()
+        .onClick(() => {
+          const codeblock = "```raindrop\n" +
+            `collection: ${selectedCollection}\n` +
+            (search ? `search: ${search}\n` : "") +
+            `sort: ${sort}\n` +
+            `showTags: ${showTags}\n` +
+            `highlights: ${highlights}\n` +
+            `format: ${format}\n` +
+            "```";
+          
+          const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+          if (activeView && activeView.editor) {
+            const cursor = activeView.editor.getCursor();
+            activeView.editor.replaceRange(codeblock, cursor);
+          } else {
+            new Notice("No active markdown note found to insert into.");
+          }
+          this.close();
+        })
+    );
+  }
+
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+}
+
 /**
  *
  * We use the *test token* from an app the user sets up themselves.
@@ -142,10 +248,10 @@ export default class ObsidianRaindrop extends Plugin {
  *
  * https://developer.raindrop.io/v1/authentication/token
  */
-class ObsidianRaindropSettingsTab extends PluginSettingTab {
-  plugin: ObsidianRaindrop;
+class RaindropLiveSettingsTab extends PluginSettingTab {
+  plugin: RaindropLive;
 
-  constructor(app: App, plugin: ObsidianRaindrop) {
+  constructor(app: App, plugin: RaindropLive) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -155,14 +261,14 @@ class ObsidianRaindropSettingsTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Raindrop Settings" });
+    containerEl.createEl("h2", { text: "Raindrop Live Settings" });
 
     new Setting(containerEl)
       .setName("Raindrop Test Token")
-      .setDesc("Test access token used to authenticate with Raindrop.io")
+      .setDesc("Get your token at https://app.raindrop.io/settings/integrations")
       .addText((text) =>
         text
-          .setPlaceholder("")
+          .setPlaceholder("Paste token here")
           .setValue(this.plugin.settings.raindropAccessToken)
           .onChange(async (value) => {
             this.plugin.settings.raindropAccessToken = value;
@@ -171,21 +277,18 @@ class ObsidianRaindropSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Bookmark List Refresh Interval")
-      .setDesc(
-        "How long (in minutes) to wait before automatically refetching bookmarks for the code block inclusions."
-      )
+      .setName("Auto Refresh (Minutes)")
+      .setDesc("How often to refresh the live list.")
       .addText((text) =>
         text
           .setPlaceholder("60")
           .setValue(this.plugin.settings.bookmarkListRefreshInterval.toString())
           .onChange(async (value) => {
             const valueAsInt = parseInt(value);
-            if(isNaN(valueAsInt)) {
-              
+            if (!isNaN(valueAsInt)) {
+              this.plugin.settings.bookmarkListRefreshInterval = valueAsInt;
+              await this.plugin.saveSettings();
             }
-            this.plugin.settings.bookmarkListRefreshInterval = valueAsInt;
-            await this.plugin.saveSettings();
           })
       );
   }
