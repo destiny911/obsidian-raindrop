@@ -36,18 +36,25 @@
 
 <div id="bookmark-block-container" class="container">
   {#if $raindrops.status === "loading"}
-    <WaitingIndicator />
+    <div class="loading-wrapper">
+      <WaitingIndicator />
+    </div>
   {:else if $raindrops.status === "error"}
-    <span>Error: {$raindrops.error.message}</span>
+    <div class="error-wrapper">
+      <span>Error: {$raindrops.error.message}</span>
+    </div>
   {:else}
     {#if params.format === "table"}
       <table cellpadding="0" cellspacing="0" class="raindrop-table">
         {#each $raindrops.data as raindrop}
-          <tr>
+          <tr class="raindrop-row">
             <td class="raindrop-link-cell">
-              <a href={raindrop.link}>
-                {raindrop.title}
-              </a>
+              <div class="raindrop-item-header">
+                <img class="raindrop-favicon" src="https://www.google.com/s2/favicons?sz=32&domain={new URL(raindrop.link).hostname}" alt="" />
+                <a href={raindrop.link} class="raindrop-title">
+                  {raindrop.title}
+                </a>
+              </div>
             </td>
             {#if params.showTags === true}
               <td class="tag-cell">
@@ -59,60 +66,28 @@
               </td>
             {/if}
           </tr>
-          {#if params.highlights === true}
-          <tr>
-            <td class="highlight-cell" colspan="{params.showTags ? 2 : 1}">
-              <ul class="raindrop-highlight-list">
-                {#each raindrop.highlights as highlight}
-                  <li class="raindrop-highlight-list-item">
-                    <figure class="raindrop-highlight-figure">
-                      <blockquote
-                        class="raindrop-blockquote"
-                        cite={highlight.link}
-                      >
-                        <p>{highlight.text}</p>
-                      </blockquote>
-                    </figure>
-                    {#if highlight.note}
-                      <p class="raindrop-highlight-note">{highlight.note}</p>
-                    {/if}
-                  </li>
-                {/each}
-              </ul>
-            </td>
-          </tr>
-        {/if}
         {/each}
       </table>
     {:else}
       <ul class="raindrop-list">
         {#each $raindrops.data as raindrop}
           <li class="raindrop-list-item">
-            <span class="raindrop-link"
-              ><a href={raindrop.link}>{raindrop.title}</a></span
-            >
-            {#if params.showTags === true && raindrop.tags.length > 0}
-              <ul class="raindrop-tag-list">
-                {#each raindrop.tags as tag}
-                  <li class="raindrop-tag-list-item">
-                    <RaindropTag text={tag} />
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-            {#if params.highlights === true}
+            <div class="raindrop-item-header">
+              <img class="raindrop-favicon" src="https://www.google.com/s2/favicons?sz=32&domain={new URL(raindrop.link).hostname}" alt="" />
+              <a href={raindrop.link} class="raindrop-title">
+                {raindrop.title}
+              </a>
+              <span class="raindrop-domain">{new URL(raindrop.link).hostname.replace('www.', '')}</span>
+            </div>
+            {#if params.highlights === true && raindrop.highlights && raindrop.highlights.length > 0}
               <ul class="raindrop-highlight-list">
                 {#each raindrop.highlights as highlight}
                   <li class="raindrop-highlight-list-item">
                     <figure class="raindrop-highlight-figure">
-                      <blockquote
-                        class="raindrop-blockquote"
-                        cite={highlight.link}
-                      >
+                      <blockquote class="raindrop-blockquote" cite={highlight.link}>
                         <p>{highlight.text}</p>
                       </blockquote>
                     </figure>
-
                     {#if highlight.note}
                       <p class="raindrop-highlight-note">{highlight.note}</p>
                     {/if}
@@ -124,90 +99,123 @@
         {/each}
       </ul>
     {/if}
-    {#if $raindrops.IsFetching}
-      <WaitingIndicator />
+    {#if $raindrops.isFetching}
+      <div class="fetching-indicator">
+        <WaitingIndicator />
+      </div>
     {/if}
   {/if}
 </div>
 
 <style lang="scss">
+  #bookmark-block-container {
+    padding: 10px 0;
+  }
+
   .raindrop {
-    &-table {
-      td {
-        padding-bottom: 0.25em;
-        padding-top: 0.25em;
+    &-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
 
-        &.raindrop-link-cell {
-          width: 70%;
-        }
+    &-list-item {
+      padding: 8px 12px;
+      margin: 4px 0;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
 
-        &.raindrop-tag-cell {
-          .tags {
-            display: flex;
-            flex-wrap: wrap;
-
-            & > :global(*) {
-              margin-bottom: 0.25em;
-              margin-top: 0.25em;
-            }
-          }
-        }
+      &:hover {
+        background-color: var(--background-modifier-hover);
       }
     }
 
-    &-list {
+    &-item-header {
       display: flex;
-      flex-direction: column;
-      list-style-type: none;
-      margin: 0;
-      padding-left: 0;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    &-favicon {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    &-title {
+      font-weight: 500;
+      color: var(--text-accent);
+      text-decoration: none;
+      font-size: 1.05em;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    &-domain {
+      font-size: 0.85em;
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    &-table {
+      width: 100%;
+      border-collapse: collapse;
+
+      .raindrop-row {
+        &:hover {
+          background-color: var(--background-modifier-hover);
+        }
+      }
+
+      td {
+        padding: 8px 12px;
+      }
     }
 
     &-highlight-list {
-      margin-bottom: 0;
-      margin-top: 1em;
-      padding-left: 0;
-
-      &-item {
-        margin-bottom: 2em;
-      }
+      margin: 12px 0 8px 28px;
+      padding-left: 12px;
+      border-left: 2px solid var(--interactive-accent);
+      list-style: none;
     }
 
-    &-list-item,
     &-highlight-list-item {
-      display: flex;
-      flex-direction: column;
+      margin-bottom: 12px;
     }
 
-    &-highlight-figure {
-      display: flex;
-      flex-direction: column;
-    }
-
-    &-tag-list {
-      display: flex;
-      justify-content: flex-start;
+    &-blockquote {
       margin: 0;
-      padding: 0;
-      text-align: right;
+      font-style: italic;
+      color: var(--text-normal);
+      opacity: 0.9;
 
-      &-item {
-        list-style-type: none;
+      p {
+        margin: 0;
       }
     }
 
     &-highlight-note {
-      font-style: italic;
-      padding-left: 2em;
+      font-size: 0.9em;
+      color: var(--text-muted);
+      margin-top: 4px;
+      padding-left: 0;
     }
   }
 
-  .raindrop-blockquote,
-  .raindrop-highlight-figure {
-    margin: 0;
+  .loading-wrapper, .fetching-indicator {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
   }
 
-  :global(div[data-mode="source"]) .raindrop-highlight-list {
-    padding-left: 0;
+  .error-wrapper {
+    color: var(--text-error);
+    padding: 10px;
+    border: 1px solid var(--text-error);
+    border-radius: 4px;
   }
 </style>
