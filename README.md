@@ -1,78 +1,46 @@
-# Obsidian Raindrop Plugin
-This plugin allows for basic integration with [Raindrop.io](https://raindrop.io), a bookmarking service and [Obsidian](https://obsidian.md).
+# Raindrop Live
 
-## Current Features
-- Create a codeblock to display a list of links from your Raindrop account that matches the provided search filters
+**Raindrop Live** is a user-friendly, lightweight plugin that brings your [Raindrop.io](https://raindrop.io) bookmarks directly into [Obsidian](https://obsidian.md) using live codeblocks. Unlike other plugins that import thousands of files, Raindrop Live gives you a real-time view of your bookmarks without cluttering your vault.
 
-## Planned Features
-- Create Raindrop bookmark from link within Obsidian
-	- Obsidian internal links
-	- External links
-- Create note from bookmark
+This is a modernized and improved fork of the original `obsidian-raindrop` plugin by Micah Topping.
 
-## Example
-<pre>
+## ✨ New in Raindrop Live
+- **Sidebar GUI Builder:** No more manual coding. Click the Raindrop icon in your left sidebar to visually build your view and insert it into any note.
+- **Improved Stability:** Patched crashes and updated for modern Obsidian (1.x) compatibility.
+- **Clean UI:** Optimized display for both List and Table views.
+
+## 🚀 How to Use
+1. **Sidebar Icon:** Click the Raindrop icon in the left ribbon.
+2. **Build your View:** Select your collection, sort order, and filters in the popup window.
+3. **Insert:** Click "Insert Raindrop View" to drop the live list into your current note.
+
+## 🛠️ Manual Configuration (Optional)
+If you prefer to write the codeblocks manually, use the following syntax:
+
 ```raindrop
 collection: 0
-format: table
+format: list
 search: #css
-sort: title
+sort: -created
+showTags: true
+highlights: false
 ```
-</pre>
 
-### List View
-![Example List View](https://raw.githubusercontent.com/mtopping/obsidian-raindrop/main/_images/obsidian-raindrop-list-view.png)
+### Options
+| Key | Optional | Effect |
+| --- | :---: | --- |
+| `collection` | Y | ID of the collection (0 for All, -1 for Unsorted). |
+| `format` | Y | `list` or `table`. |
+| `sort` | Y | `created`, `-created`, `title`, `-title`. |
+| `search` | Y | Raindrop search operators (e.g., `#tag`). |
+| `showTags` | Y | `true` or `false`. |
+| `highlights`| Y | `true` or `false` (shows your bookmark highlights). |
 
-### Table View
-![Example Table View](https://raw.githubusercontent.com/mtopping/obsidian-raindrop/main/_images/obsidian-raindrop-table-view.png)
-  
+## ⚙️ Setup
+1. Go to [Raindrop Integrations](https://app.raindrop.io/settings/integrations).
+2. Click **"Create new app"**.
+3. Copy the **"Test token"**.
+4. Paste it into the Raindrop Live settings in Obsidian.
 
-### Codeblock Options
-| key        | optional | values                                                                           | effect                                                                                         |
-| ---------- |:--------:| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| collection |    Y     | number representing the collection ID                                | limit the search query to this collection; defaults to 0 (all)                                     |
-| format     |    Y     | 'list' or 'table'                                                                | show the results as a list or a table; defaults to 'list'                                      |
-| sort       |    Y     | [See Raindrop Sort Options](https://developer.raindrop.io/v1/raindrops/multiple) | Sets the sort order of the search results; defaults to '-created' (descending by created date) |
-| search     |    N     | [See Raindrop Search Examples](https://help.raindrop.io/using-search/#operators) | A text search query just as you would enter in the Raindrop UI to return a list of bookmarks   |
-| showTags   |    Y     | 'true' or 'false'                                                                | Displays tags for each bookmark; defaults to true                                              |
-| highlights |    Y     | 'true' or 'false' | show highlights for the returned bookmarks |
-
-#### Finding the collection ID
-1. Visit your raindrop collection via the website, e.g. https://app.raindrop.io/my/15660833
-2. The string of numbers after '/my/' is your collection ID
-3. There are a few special collection IDs which can be used:
-
-   | ID  | Collection    |
-   |:---:| ------------- |
-   |  0  | All bookmarks |
-   | -1  | Unsorted      |
-   | -99 | Trash              |
-
-## Plugin Setup
-After installing the plugin, you will need to setup a new app in your Raindrop account. Once you have completed this step, you can use your new app's test account key for access to the API.
-
-### Raindrop Test Token
-
-I elected to not use the OAuth mechanism that the Raindrop API offers to avoid maintaining my own middleware.
-
-1. Access the [Integrations](https://app.raindrop.io/settings/integrations) section of your Raindrop account
-2. Click "Create new app"
-3. Copy the "Test token"
-
-In the plugin settings you can paste this test key to interact without needing to directly login with Raindrop.
-
-### Bookmark List Refresh Interval
-
-Your bookmarks will automatically refresh from Raindrop in the background for the current note. Set the number of minutes here for how often to check Raindrop for new links in the search codeblock of any active notes.
-
-## Recipes
-
-### Daily Bookmarks
-
-I use this query in my daily notes template. The date variable is transcluded when the page is created, giving you a list of bookmarks you created that day. It can be a helpful way to recall the things you read or researched that day.
-
-<pre>
-```raindrop
-search: created:{{DATE:yyyy-MM-DD}}
-```
-</pre>
+---
+*Maintained by [destiny911](https://github.com/destiny911). Based on the original work by Micah Topping.*
